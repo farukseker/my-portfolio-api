@@ -5,6 +5,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 class Testimonial(models.Model):
     message = models.CharField(max_length=500)
     name = models.CharField(max_length=75)
+    photo = models.URLField(default='', blank=True, null=True)
 
     phone = PhoneNumberField(default='',  blank=True, null=True)
     email = models.EmailField(default='', blank=True, null=True)
