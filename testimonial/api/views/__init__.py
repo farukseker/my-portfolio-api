@@ -1,0 +1,1 @@
+from .testimonial_list_view import TestimonialListCreateView

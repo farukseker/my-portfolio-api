@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'game',
     'resume',
     'wall',
+    'testimonial',
     'config'
     # 'survey'
 ]+[
