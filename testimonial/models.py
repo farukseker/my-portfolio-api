@@ -21,3 +21,7 @@ class Testimonial(models.Model):
 
     approved = models.BooleanField(default=False)
 
+    def __str__(self) -> str:
+        return f'{"✅" if self.approved else "❌"} {self.name} - {self.title}'
+
+
