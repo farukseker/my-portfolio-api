@@ -1,9 +1,8 @@
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListAPIView
 from testimonial.api.serializers import TestimonialSerializer
 from testimonial.models import Testimonial
 
 
-class TestimonialListCreateView(ListCreateAPIView):
+class TestimonialListView(ListAPIView):
     serializer_class = TestimonialSerializer
     queryset = Testimonial.objects.all()
-    authentication_classes = []

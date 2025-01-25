@@ -1,16 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from analytical.models import ViewModel
 from analytical.utils import get_client_ip
 
 
 class ContentTimeTick(APIView):
     lookup_field = 'pk'
-    # permission_classes = [
-    #     IsAuthenticated, IsAdminUser
-    # ]
     permission_classes = []
     authentication_classes = []
 
