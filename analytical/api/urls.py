@@ -9,6 +9,7 @@ urlpatterns = [
     path('items', views.Items.as_view(), name='items'),
     path('page/<slug:slug>/<int:count>', views.PageAnalyticalView.as_view()),
     path('visitors/<slug:name>/', views.PageVisitorsListView.as_view()),
+    path('heatmap', views.HeatMapDataView.as_view()),
 ]+[
     # matrix
     path('matrix/<name>/years', views.PageYearlyView.as_view()),

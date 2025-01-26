@@ -10,3 +10,4 @@ from .page_analytical_views import PageAnalyticalView
 from .page_visitors_list_view import PageVisitorsListView
 from .analytical_media_list_create_view import AnalyticalMediaListCreateView
 from .analytical_media_detail_view import AnalyticalMediaRetrieveUpdateDestroyView
+from .heatmap_view import HeatMapDataView

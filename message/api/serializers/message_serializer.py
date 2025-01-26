@@ -22,7 +22,7 @@ class MessageCreateSerializer(serializers.ModelSerializer):
             metadata={
                 "name": message.name,
                 "email": message.email,
-                "ip": view.ip_address,
+                "ticket": view.pk,
             },
             description=f'Message: {message.message}'
         )

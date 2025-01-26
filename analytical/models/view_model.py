@@ -1,6 +1,5 @@
 from django.db import models
 from config.settings.base import env
-from config.custom_fields import EncryptedField
 from typing import NoReturn
 
 
@@ -51,7 +50,7 @@ class ViewModel(models.Model):
         for month, turkish in months.items():
             visited_time = visited_time.replace(month, turkish)
 
-        return f'{self.ip_address} | {visited_time} '
+        return f'{self.pk} | {self.ip_address} | {visited_time} '
 
     @staticmethod
     def ip_query_service_url() -> str:
