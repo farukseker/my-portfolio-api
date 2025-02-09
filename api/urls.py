@@ -14,5 +14,6 @@ urlpatterns = [
     path('game/', include('game.api.urls'), name='game'),
     path('analytical/', include('analytical.api.urls'), name='analytical'),
     path('resume/', include('resume.api.urls'), name='resume'),
+    path('certificates/', include('certificates.api.urls'), name='certificates'),
 ]
 

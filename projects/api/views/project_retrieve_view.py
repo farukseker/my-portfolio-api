@@ -23,13 +23,7 @@ class ProjectRetrieveView(RetrieveAPIView):
         if self.request.user.is_authenticated:
             return ContentModel.objects.all()
         return ContentModel.objects.filter(show=True)
+
     @get_performance_metric
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
-
-
-    # def get(self, *args, **kwargs):
-    #     response = super().get(*args, **kwargs)
-    #     response.data['extra'] = 'extra'
-    #     return response
-

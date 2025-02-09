@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'resume',
     'wall',
     'testimonial',
+    'certificates',
     'config'
     # 'survey'
 ]+[
@@ -73,7 +74,6 @@ INSTALLED_APPS = [
     # 'rest_framework.authtoken',
     # 'knox'
 ]
-
 # INSTALLED_APPS.insert(0, 'unfold')  # 3rd
 
 MIDDLEWARE = [
@@ -85,7 +85,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]+[
-    'analytical.middleware.AnalyticalMiddleware'
+    'analytical.middleware.AnalyticalMiddleware',
+    # 'custom_auth.middleware.OnlyAdminMiddleware'
 ]+[
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'

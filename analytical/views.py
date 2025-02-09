@@ -12,3 +12,4 @@ class AnalyticalMediaRedirectView(RedirectView):
         setattr(self.request, 'data', {})
         ViewCountWithRule(analytic_media, self.request)()
         return analytic_media.media_source
+
