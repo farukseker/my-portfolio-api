@@ -18,9 +18,9 @@ class CityCountryFilter(admin.SimpleListFilter):
         ]
 
     def queryset(self, request, queryset):
-        if self.value() == "city":
+        if self.value() == "City":
             return queryset.filter(~Q(ip_data__city=None))
-        if self.value() == "country":
+        if self.value() == "Country":
             return queryset.filter(~Q(ip_data__country=None))
         return queryset
 
