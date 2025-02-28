@@ -5,6 +5,7 @@ from certificates.models import CertificateProviderModel
 
 class CertificatesProviderSerializer(ModelSerializer):
     certificates = CertificatesSerializer(many=True, required=False)
+
     class Meta:
         model = CertificateProviderModel
         fields: str = '__all__'
