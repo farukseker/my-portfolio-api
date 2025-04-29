@@ -6,7 +6,7 @@ from langchain.output_parsers import PydanticOutputParser
 from langchain_ollama.llms import OllamaLLM
 from langchain_core.runnables.base import RunnableSequence
 from pydantic import BaseModel
-import models
+from chatwithme import llm_models
 
 
 @dataclass()
@@ -65,8 +65,8 @@ class PromptManager:
                     triggers = var[1].strip().split(',')
                 elif var[0] == '!model':
                     model: str = var[1]
-                    if hasattr(models, model):
-                        model = getattr(models, model)
+                    if hasattr(llm_models, model):
+                        model = getattr(llm_models, model)
             else:
                 prompt += context_var
 

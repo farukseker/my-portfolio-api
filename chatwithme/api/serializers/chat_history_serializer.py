@@ -1,4 +1,4 @@
-from chatwithme.models import ChatHistory
+from chatwithme.llm_models import ChatHistory
 from rest_framework import serializers
 
 
