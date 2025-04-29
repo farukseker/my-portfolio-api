@@ -17,19 +17,8 @@ class CustomHomeView(APIView):
         view = ViewCountWithRule(page, self.request)
         view = view()
         return {
-            "featured_projects": self.content_loader(show=True, content_type__name='project', is_featured=True),
-            "featured_blogs": self.content_loader(show=True, content_type__name='blog', is_featured=True),
-            "testimonials": self.get_testimonials(),
             "ticket": view.id
         }
-
-    @staticmethod
-    def content_loader(**kwargs):
-        return ContentModel.objects.filter(**kwargs)
-
-    @staticmethod
-    def get_testimonials():
-        return Testimonial.objects.filter(approved=True)
 
     def get(self, request, *args, **kwargs):
         return Response(self.serializer_class(self.get_queryset()).data)
