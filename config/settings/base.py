@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'import_export',
-    'chatwithme'
+    # 'chatwithme'
     # 'rest_framework.authtoken',
     # 'knox'
 ]
