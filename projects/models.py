@@ -25,12 +25,13 @@ class ContentModel(models.Model):
         TR = "2", "Türkçe"
 
     title = models.CharField(max_length=50)
-    slug = TurkishAutoSlugField(populate_from='title',
-                                unique=True,
-                                editable=True,
-                                blank=True,
-                                always_update=True,
-                                )
+    slug = TurkishAutoSlugField(
+        populate_from='title',
+        unique=True,
+        editable=True,
+        blank=True,
+        always_update=True,
+    )
 
     show = models.BooleanField(default=True)
 

@@ -26,7 +26,7 @@ environ.Env.read_env(BASE_DIR.joinpath('.env'))
 
 
 # Application definition
-
+OPENROUTER_API_KEY = env('OPENROUTER_API_KEY')
 
 # INSTALLED_APPS.append('debug_toolbar')
 # MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'unfold',
     'unfold.contrib.filters',
     'unfold.contrib.forms',
-    'unfold.contrib.inlines',
+    'unfold.contrib.inlines',""
     'unfold.contrib.import_export',
     'unfold.contrib.guardian',
     'unfold.contrib.simple_history',
@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'import_export',
+    'chatwithme'
     # 'rest_framework.authtoken',
     # 'knox'
 ]
@@ -164,3 +165,5 @@ discord_logger_options = {
     "default_level": "info",
 }
 CUSTOM_LOGGER = DiscordLogger(webhook_url=DISCORD_LOGGER_WEBHOOK_URL, **discord_logger_options)
+
+PROMPT_TEMPLATES_BASE_DIR = BASE_DIR / 'chatwithme/prompt_templates'

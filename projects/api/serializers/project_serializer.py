@@ -10,7 +10,7 @@ class ContentSerializer(serializers.ModelSerializer):
     word_count = serializers.SerializerMethodField(required=False, read_only=True)
     ticket = serializers.SerializerMethodField(required=False, read_only=True)
     comments = ContentCommentSerializer(many=True, required=False)
-    tags = TagSerializer(many=True, required=False)
+    # tags = TagSerializer(many=True, required=False)
     view = serializers.SerializerMethodField()
 
     @staticmethod

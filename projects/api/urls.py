@@ -7,6 +7,7 @@ urlpatterns = [
     path('type/', ContentsView.as_view(), name='contents'),
     path('type/<name>', ContentFlagsView.as_view(), name='content_flags'),
     path('all/', AllProjectsListView.as_view(), name='all_projects'),
+    # path('tags/', AllTagsListView.as_view(), name='all_tags'),
     # custom port's
     path('all/blog', CustomBlogContentView.as_view(), name='custom_blog'),
     # path('all/blog', CustomBlogContentView.as_view(), name='custom_blog'),
