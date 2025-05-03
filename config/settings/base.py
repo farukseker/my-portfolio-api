@@ -62,7 +62,8 @@ INSTALLED_APPS = [
     'resume',
     'wall',
     'testimonial',
-    'config'
+    'config',
+    'chatwithme'
     # 'survey'
 ]+[
     # 3rd apps
@@ -70,7 +71,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'import_export',
-    # 'chatwithme'
     # 'rest_framework.authtoken',
     # 'knox'
 ]
