@@ -334,3 +334,5 @@ smart_git/*
 data_backups
 data_backups/
 /data_backups/
+
+attacker_clean_from_visitors_list.ipynb

@@ -24,7 +24,7 @@ class ContentModel(models.Model):
         ENG = "1", "English"
         TR = "2", "Türkçe"
 
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=250)
     slug = TurkishAutoSlugField(
         populate_from='title',
         unique=True,
