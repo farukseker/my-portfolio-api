@@ -40,8 +40,12 @@ class ContentSerializer(serializers.ModelSerializer):
         instance = ContentModel.objects.create(**validated_data)
 
         for tag_data in tags_data:
-            tag, _ = TagModel.objects.get_or_create(name=tag_data['name'])
-            instance.tags.add(tag)
+            if tag := TagModel.objects.filter(pk=tag_data['pk']):
+                instance.tags.add(tag)
+            else:
+                _tag_data = tag_data
+                _tag_data.pop('pk')
+                tag = TagModel.objects.create(**_tag_data)
 
         return instance
 
