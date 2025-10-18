@@ -1,0 +1,43 @@
+[project]
+name = "f4v2cv"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.14.2",
+    "cloudinary>=1.44.1",
+    "colorlog>=6.10.1",
+    "discord>=2.3.2",
+    "discord-py>=2.6.4",
+    "discord-webhook>=1.4.1",
+    "django>=5.2.7",
+    "django-autoslug>=1.9.9",
+    "django-cors-headers>=4.9.0",
+    "django-dbbackup>=5.0.0",
+    "django-debug-toolbar>=6.0.0",
+    "django-environ>=0.12.0",
+    "django-gdrive-backup>=0.0.11",
+    "django-import-export>=4.3.10",
+    "django-phonenumber-field>=8.3.0",
+    "django-rest-knox>=5.0.2",
+    "django-storages>=1.14.6",
+    "django-unfold>=0.68.0",
+    "djangorestframework>=3.16.1",
+    "djangorestframework-simplejwt>=5.5.1",
+    "fake-useragent>=2.2.0",
+    "faker>=37.11.0",
+    "langchain>=0.3.27",
+    "langchain-ollama>=0.3.10",
+    "phonenumbers>=9.0.16",
+    "pillow>=12.0.0",
+    "psutil>=7.1.0",
+    "psycopg2>=2.9.11",
+    "pyotp>=2.9.0",
+    "python-dateutil>=2.9.0.post0",
+    "pyyaml>=6.0.3",
+    "sentry-sdk>=2.42.0",
+    "setuptools>=80.9.0",
+    "unidecode>=1.4.0",
+    "whitenoise[brotli]>=6.11.0",
+]
