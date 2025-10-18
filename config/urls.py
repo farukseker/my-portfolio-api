@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from config.settings.base import env
 from django.conf.urls.static import static
-
+from django.http import HttpResponse
 from analytical.views import AnalyticalMediaRedirectView
 
 
