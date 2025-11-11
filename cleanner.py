@@ -4,8 +4,8 @@ root_dir = r"C:\Users\seker\PycharmProjects\f4v2cv"  # hedef dizin
 
 
 for dirpath, dirnames, filenames in os.walk(root_dir):
-    if "requirements_backup.txt" in filenames:
-        file_path = os.path.join(dirpath, "requirements_backup.txt")
+    if "requirements_backup_second.txt" in filenames:
+        file_path = os.path.join(dirpath, "requirements_backup_second.txt")
         try:
             os.remove(file_path)
             print(f"Silindi: {file_path}")

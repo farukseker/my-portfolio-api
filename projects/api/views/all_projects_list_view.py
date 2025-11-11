@@ -1,33 +1,58 @@
+# views.py
+from django.db.models import Count, Prefetch, Q
 from rest_framework.generics import ListCreateAPIView
+from rest_framework.filters import OrderingFilter, SearchFilter
+
 from projects.api.serializers import ContentListSerializer
-from projects.models import ContentModel
-from rest_framework.filters import OrderingFilter, SearchFilter, BaseFilterBackend
-from django.db.models import Q
+from projects.models import ContentModel, ContentCommentModel, TagModel
 
 
 class AllProjectsListView(ListCreateAPIView):
     serializer_class = ContentListSerializer
-    filter_backends: list = [SearchFilter, OrderingFilter]
-    search_fields: tuple = 'title', 'content_type__name', 'tags__id'
-    lookup_field = 'content_type'
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ("title", "content_type__name", "tags__name")   # tuple fix
+    ordering_fields = ("update", "title", "id")
     authentication_classes = []
 
-    def get_queryset(self, *args, **kwargs):
+    def get_queryset(self):
+        qs = (
+            ContentModel.objects
+            .filter(show=True)
+            .only("id", "title", "slug", "update", "language_type", "content_type")  # daralt
+            .select_related("content_type")  # FK için tek join (no N+1)
+            .annotate(
+                view_count=Count("view", distinct=True)  # per-row COUNT(*) N+1'ini öldür
+            )
+            .prefetch_related(
+                Prefetch(
+                    "tags",
+                    queryset=TagModel.objects.only("id", "name", "slug"),
+                ),
+                Prefetch(
+                    "comments",
+                    queryset=ContentCommentModel.objects.only(
+                        "id", "name", "email", "comment", "created"
+                    ).order_by("-created"),
+                ),
+            )
+        )
 
-        queryset = ContentModel.objects.filter(show=True)
-
-        content_type_param = self.request.query_params.get('content_type')
+        content_type_param = self.request.query_params.get("content_type")
         if content_type_param:
-            queryset = queryset.filter(content_type__name=content_type_param)
+            qs = qs.filter(content_type__name=content_type_param)
 
-        tags = self.request.query_params.get('tags')
+        tags = self.request.query_params.get("tags")
         if tags:
-            queryset = queryset.filter(Q(tags__id__in=[tag for tag in tags.split(',') if tag])).distinct()
+            tag_ids = [t for t in tags.split(",") if t]
+            qs = qs.filter(tags__id__in=tag_ids).distinct()
 
-        if latest := self.request.query_params.get('latest'):
-            queryset = queryset.order_by('-update')[:int(latest)]
+        lang = self.request.query_params.get("lang")
+        if lang and lang in ContentModel.LanguageType.values:
+            qs = qs.filter(language_type=lang)
 
-        if lang := self.request.query_params.get('lang'):
-            if lang in ContentModel.LanguageType.values:
-                queryset = queryset.filter(Q(language_type=lang))
-        return queryset
+        # en sonda sıralama/kesit (slice), queryset hâlâ lazy
+        latest = self.request.query_params.get("最新") or self.request.query_params.get("latest")
+        if latest:
+            qs = qs.order_by("-update")[:int(latest)]
+
+        return qs
