@@ -7,7 +7,11 @@ from projects.api.serializers import ContentListSerializer
 from projects.models import ContentModel, ContentCommentModel
 from tags.models import TagModel
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
+
+@method_decorator(cache_page(60*5, key_prefix="projects"), name="list")
 class AllProjectsListView(ListCreateAPIView):
     serializer_class = ContentListSerializer
     filter_backends = [SearchFilter, OrderingFilter]
