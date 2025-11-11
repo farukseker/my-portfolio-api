@@ -51,9 +51,16 @@ class AllProjectsListView(ListCreateAPIView):
         if lang and lang in ContentModel.LanguageType.values:
             qs = qs.filter(language_type=lang)
 
-        # en sonda sıralama/kesit (slice), queryset hâlâ lazy
-        latest = self.request.query_params.get("最新") or self.request.query_params.get("latest")
-        if latest:
-            qs = qs.order_by("-update")[:int(latest)]
+        latest_key = next(
+            (k for k in ("latest", "limit", "son") if k in self.request.query_params),
+            None
+        )
+        if latest_key:
+            raw = self.request.query_params.get(latest_key)
+            try:
+                n = max(1, min(int(raw), 100))  # hard cap: 100
+            except (TypeError, ValueError):
+                n = 20  # sensible default
+            qs = qs.order_by("-update")[:n]
 
         return qs
