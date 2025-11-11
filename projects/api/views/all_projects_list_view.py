@@ -4,7 +4,8 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.filters import OrderingFilter, SearchFilter
 
 from projects.api.serializers import ContentListSerializer
-from projects.models import ContentModel, ContentCommentModel, TagModel
+from projects.models import ContentModel, ContentCommentModel
+from tags.models import TagModel
 
 
 class AllProjectsListView(ListCreateAPIView):
