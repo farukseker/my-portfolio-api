@@ -27,7 +27,7 @@ class AllProjectsListView(ListCreateAPIView):
             .prefetch_related(
                 Prefetch(
                     "tags",
-                    queryset=TagModel.objects.only("id", "name", "slug"),
+                    queryset=TagModel.objects.only("id", "name", "icon_type", "icon"),
                 ),
                 Prefetch(
                     "comments",
