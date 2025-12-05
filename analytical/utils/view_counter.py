@@ -35,15 +35,13 @@ class ViewCountWithRule:
         return self.request.user.is_authenticated and self.request.user.is_superuser
 
     def get_user_agent(self):
-        try:
-            return self.request.META['HTTP_USER_AGENT']
-        except Exception as error:
-            self.logger.error(error)
-            if hasattr(self.request, 'META'):
-                self.logger.error(self.request.META)
-            else:
-                self.logger.error('request is not have META')
-            return
+        if meta := self.request.META.get('HTTP_USER_AGENT', None):
+            return meta
+        elif hasattr(self.request, 'META'):
+            self.logger.error('meta error meta looks like: {0}'.format(str(self.request.META)))
+        else:
+            self.logger.error('request is not have META')
+        return None
 
     def get_ip_data(self):
         if settings.DEBUG:
