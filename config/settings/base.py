@@ -20,13 +20,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # env
 env = environ.Env()
-environ.Env.read_env(BASE_DIR.joinpath('.env'))
+environ.Env.read_env(BASE_DIR /'.env')
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 
 # Application definition
 OPENROUTER_API_KEY = env('OPENROUTER_API_KEY')
+GEMINI_AI_API_KEY = env('GEMINI_AI_API_KEY')
 
 # INSTALLED_APPS.append('debug_toolbar')
 # MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
