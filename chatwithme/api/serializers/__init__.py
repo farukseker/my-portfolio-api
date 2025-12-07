@@ -1,2 +1,3 @@
 from .chat_history_serializer import ChatHistorySerializer
 from .meeting_model_serializer import MeetingSerializer
+from .chat_log_serializer import ChatLogHistorySerializer
