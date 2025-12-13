@@ -16,7 +16,7 @@ class ChatLog(models.Model):
     message = models.TextField()
     type = models.CharField(max_length=20)
     timestamp = models.DateTimeField(auto_now_add=True)
-
+    extra_json = models.JSONField(null=True, blank=True)
 
 class MeetingModel(models.Model):
     meeting_id = models.UUIDField(default=uuid.uuid4, db_index=True)
