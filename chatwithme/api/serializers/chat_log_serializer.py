@@ -10,4 +10,4 @@ class ChatLogHistorySerializer(serializers.ModelSerializer):
             'type',
             'timestamp',
         ]
-        exclude = ('room',)
+        exclude = 'room',

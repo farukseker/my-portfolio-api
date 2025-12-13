@@ -1,6 +1,9 @@
 from django.core.handlers.wsgi import WSGIRequest
 from django.urls import ResolverMatch
+from rest_framework import status
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+
 from analytical.utils import get_client_ip
 from chatwithme.models import ChatRoom
 import hashlib
@@ -44,8 +47,11 @@ class ChatSessionTrustMiddleware:
             self.is_request_in_allowed_paths(request)
         ]):
             chat_room = ChatRoom.objects.filter(session_id=chat_id).first()
+            if not chat_room:
+                raise ValidationError("Session room not found")
+
             original_hash = self.hash_obj(str(chat_room.session_id) + str(client_ip))
             test_hash = self.hash_obj(str(chat_id) + str(client_ip))
             if original_hash != test_hash:
-                raise ValidationError("trusted session ids don't match")
+                raise ValidationError("Trusted session ids don't match")
         return response

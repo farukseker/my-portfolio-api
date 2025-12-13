@@ -1,1 +1,1 @@
-from .prompt_manger import PromptManager, Prompt
+from .prompt_manger import PromptManager, PromptDef

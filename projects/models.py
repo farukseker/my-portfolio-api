@@ -5,9 +5,12 @@ from autoslug import AutoSlugField
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from unidecode import unidecode
+from pgvector.django import VectorField
+from sentence_transformers import SentenceTransformer
 
 
 User = get_user_model()
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 class TurkishAutoSlugField(AutoSlugField):
@@ -40,6 +43,7 @@ class ContentModel(models.Model):
     seo_image_alt = models.TextField(blank=True, null=True)
 
     text = models.TextField(help_text='use html')
+    embedding = VectorField(dimensions=768, null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)
@@ -52,6 +56,12 @@ class ContentModel(models.Model):
     is_featured = models.BooleanField(default=False)
     language_type = models.CharField(max_length=1, choices=LanguageType, default=LanguageType.ENG)
     custom_data = models.JSONField(default=get_default_custom_data, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.embedding:
+            text_to_embed = f"{self.title}\n{self.text}"
+            self.embedding = model.encode(text_to_embed, convert_to_numpy=True, device='cpu').tolist()
+        super().save(*args, **kwargs)
 
     def get_view(self):
         return self.view.all()

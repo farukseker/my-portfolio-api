@@ -1,6 +1,6 @@
 # Created by https://www.toptal.com/developers/gitignore/api/django,pycharm+all,jetbrains+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=django,pycharm+all,jetbrains+all
-
+notebooks
 ### Django ###
 *.log
 *.pot

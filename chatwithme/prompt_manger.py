@@ -1,120 +1,214 @@
-import os.path
-from config.settings.base import PROMPT_TEMPLATES_BASE_DIR
+import os
+import re
 from dataclasses import dataclass
-from langchain.prompts import PromptTemplate
-from langchain.output_parsers import PydanticOutputParser
-from langchain_ollama.llms import OllamaLLM
-from langchain_core.runnables.base import RunnableSequence
+from typing import Any
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel
-from chatwithme import llm_models
+from config.settings.base import BASE_DIR
+from langchain.schema import SystemMessage
+from chatwithme import llm_models   # senin modeller
+
+PROMPT_DIR = BASE_DIR / "chatwithme/prompt_templates"
+
+# -----------------------------------------
+# INCLUDE LOADING
+# -----------------------------------------
+def load_include(path: str) -> str:
+    full_path = os.path.join(PROMPT_DIR, path)
+    with open(full_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+def load_row_rules():
+    row_rules = []
+    for fname in sorted(os.listdir(PROMPT_DIR)):
+        if fname.endswith('.rule'):
+            full_path = os.path.join(PROMPT_DIR, fname)
+            with open(full_path, "r", encoding="utf-8") as f:
+                row_rules.append(f.read().strip())
+    return row_rules
 
 
-@dataclass()
-class Prompt:
+# -----------------------------------------
+# PROMPT DEF
+# next time try: x-ai/grok-4.1-fast
+# -----------------------------------------
+@dataclass
+class PromptDef:
     name: str
-    prompt: str
-    model: object | None = None
-    triggers: list[str] | None = None
-    input_variables: list[str] | None = None
-    __llm_ref: OllamaLLM | None = None
+    prompt_text: str
+    messages: list[tuple[str, str]] | None
+    input_vars: list[str] | None
+    model: BaseModel | None
+    triggers: list[str] | None
+    rules: str | None
+    is_chat: bool
+    llm: Any = None
 
-    def __str__(self):
-        return self.prompt
+    def _template(self):
+        """
+        Build ChatPromptTemplate or PromptTemplate depending on type
+        with persona + rules support.
+        """
+        print(f'{self.input_vars=}')
+        if self.is_chat:
+            final_messages = []
+
+            # -----------------------------------------
+            # 1) ROW RULES HER ŞEYİN EN ÜSTÜNE EKLENİYOR
+            # -----------------------------------------
+            for rr in load_row_rules():
+                final_messages.append(SystemMessage(rr.strip()))
+
+            # final_messages.append(("system", GLOBAL_RULES.strip()))
+
+            # PROMPT-SPECIFIC RULES
+            if self.rules:
+                final_messages.append(("system", f"EXTRA RULES:\n{self.rules.strip()}"))
+
+            # USER-DEFINED MESSAGES FROM FILE
+            if self.messages:
+                for message in self.messages:
+                    final_messages.append(message)
+
+            return ChatPromptTemplate.from_messages(final_messages)
+
+        else:
+            # classic (chat olmayan) template
+            content = (
+                    "\n".join(load_row_rules()) + "\n" +
+                    "\n".join([x.content for x in self.messages] if self.messages else '') +
+                    self.prompt_text
+            )
+
+            return PromptTemplate(
+                template=content,
+                input_variables=self.input_vars or []
+            )
+
 
     @property
-    def template(self) -> PromptTemplate:
-        template = PromptTemplate(template=self.prompt, input_variables=self.input_variables)
-        template.input_variables = self.input_variables
-        return template
-
-    def set_llm(self, llm: OllamaLLM):
-        self.__llm_ref = llm
-
-    @property
-    def parser(self) -> PydanticOutputParser | None:
+    def parser(self):
         if self.model and issubclass(self.model, BaseModel):
             return PydanticOutputParser(pydantic_object=self.model)
         return None
 
     @property
-    def chain(self) -> RunnableSequence | None:
-        try:
-            if not self.parser:
-                return self.template | self.__llm_ref
-            return self.template | self.__llm_ref | self.parser
-        except:
-            return None
+    def chain(self):
+        template = self._template()
+        if not self.parser:
+            return template | self.llm
+        return template | self.llm | self.parser
 
 
+# -----------------------------------------
+# PROMPT MANAGER V3
+# -----------------------------------------
 class PromptManager:
-    def __init__(self, llm_ref: OllamaLLM):
-        self.llm = llm_ref
-        self.__prompts: dict[Prompt] = {}
+    def __init__(self, llm_ref):
+        self.llm_ref = llm_ref
+        self.prompts: dict[str, PromptDef] = {}
         self.load_all_prompts()
 
-    def do_prompt_context(self, name: str, context: str) -> None:
-        model: object | None = None
-        input_variables: list[str] | None = None
-        triggers: list[str] | None = None
-        prompt: str = ''
-        for context_var in context.split('\n'):
-            if len(var := context_var.split(':')) == 2 and context_var.startswith('!'):
-                if var[0] == '!input_variables':
-                    input_variables = var[1].strip().split(',')
-                if var[0] == '!triggers':
-                    triggers = var[1].strip().split(',')
-                elif var[0] == '!model':
-                    model: str = var[1]
-                    if hasattr(llm_models, model):
-                        model = getattr(llm_models, model)
-            else:
-                prompt += context_var
-
-        __prompt = Prompt(name=name, prompt=prompt, input_variables=input_variables, model=model, triggers=triggers)
-        __prompt.set_llm(self.llm)
-        self.__prompts.update({__prompt.name: __prompt})
-
     def load_all_prompts(self):
-        try:
-            if os.path.isdir(PROMPT_TEMPLATES_BASE_DIR):
-                for root, dirs, files in os.walk(PROMPT_TEMPLATES_BASE_DIR, topdown=False):
-                    for name in files:
-                        with open(os.path.join(root, name), 'r', encoding='utf-8') as pf:
-                            self.do_prompt_context(
-                                name=name,
-                                context=pf.read()
-                            )
-                    # for name in dirs:
-        except Exception as exception:
-            print(exception)
+        for root, _, files in os.walk(PROMPT_DIR):
+            for fname in files:
+                if fname.endswith(".prompt"):
+                    self._load_single_prompt(os.path.join(root, fname))
 
-    def items(self):
-        return self.__prompts.items()
+    def _load_single_prompt(self, filepath):
+        name = os.path.basename(filepath).replace(".prompt", "")
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+        p = self.parse_prompt(name, content)
+        p.llm = self.llm_ref
+        self.prompts[name] = p
 
-    def __getattr__(self, item) -> Prompt:
-        return self.__prompts.get(item)
+    # -----------------------------------------
+    # FULL PARSER
+    # -----------------------------------------
+    def parse_prompt(self, name: str, context: str) -> PromptDef:
+        model = None
+        input_vars = None
+        triggers = None
+        rules = None
+        is_chat = False
+        messages = []
+        body = []
 
+        # INCLUDES
+        includes = re.findall(r"\{include:([^}]+)\}", context)
+        for inc in includes:
+            context = context.replace(f"{{include:{inc}}}", load_include(inc))
 
-__all__ = ['PromptManager']
+        lines = context.split("\n")
+        multiline_role = None
+        multi_buffer = []
 
+        for line in lines:
+            # Metadata
 
-if __name__ == '__main__':
-    # prompts = PromptManager(OllamaLLM(model='gemma3:4b'))
-    # chain = prompts.create_reminder.chain
-    # r = chain.invoke({"task_text": "I will buy chocolate from the market today, but I must not forget to buy a bag."})
-    # # task='Buy chocolate from the market' notes='Remember to buy a bag of chocolate.' death_line='today'
-    # # task='Buy chocolate from the market' notes='Remember to buy a bag.' death_line='today'
-    # print(r)
+            if line.startswith("!"):
+                key, val = line.split(":", 1)
+                val = val.strip()
 
-    # without model
-    prompts = PromptManager(OllamaLLM(model='gemma3:4b'))
-    chain = prompts.summarize_tr.chain
+                if key == "!input_variables":
+                    input_vars = [x.strip() for x in val.split(",")]
+                elif key == "!triggers":
+                    triggers = [x.strip() for x in val.split(",")]
+                elif key == "!model":
+                    if hasattr(llm_models, val):
+                        model = getattr(llm_models, val)
+                elif key == "!chat":
+                    is_chat = val.lower() == "true"
+                elif key == "!rules":
+                    rules = val
+                continue
 
-    long_ai_message = """
-    Hi there! Based on your request, I've created a complete to-do list including
-    initial setup, code cleanup, sending the final email, and updating the tracker.  
-    All documents are organized. Let me know if you need changes.
-    """
+            # Multiline block close
+            if multiline_role and line.strip() == "":
+                messages.append((multiline_role, "\n".join(multi_buffer)))
+                multiline_role = None
+                multi_buffer = []
+                continue
 
-    result = chain.invoke({"chat_message": long_ai_message})
-    print(result)
+            # Detect "system: |"
+            if is_chat and ":" in line and "|" in line:
+                role, rest = line.split(":", 1)
+                role = role.strip()
+                if role in ("system", "human", "assistant"):
+                    if rest.strip() == "|":
+                        multiline_role = role
+                        multi_buffer = []
+                        continue
+
+            # Append multiline
+            if multiline_role:
+                multi_buffer.append(line)
+                continue
+
+            # Single-line chat
+            if is_chat and ":" in line:
+                role, msg = line.split(":", 1)
+                role = role.strip()
+                if role in ("system", "human", "assistant"):
+                    messages.append((role, msg.strip()))
+                    continue
+
+            # Fallback → classic prompt body
+            body.append(line)
+
+        return PromptDef(
+            name=name,
+            prompt_text="\n".join(body).strip(),
+            messages=messages if is_chat else None,
+            input_vars=input_vars,
+            model=model,
+            triggers=triggers,
+            rules=rules,
+            is_chat=is_chat
+        )
+
+    # Access like: manager.summarize
+    def __getattr__(self, key):
+        return self.prompts[key]
