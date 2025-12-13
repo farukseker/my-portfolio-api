@@ -28,6 +28,7 @@ dependencies = [
     "faiss-cpu>=1.13.1",
     "fake-useragent>=2.2.0",
     "faker>=37.11.0",
+    "importtime-waterfall>=1.0.0",
     "jupyterlab>=4.5.0",
     "jupyterlab-execute-time>=3.2.0",
     "jupyterlab-night>=0.5.2",

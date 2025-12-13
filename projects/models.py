@@ -10,7 +10,6 @@ from sentence_transformers import SentenceTransformer
 
 
 User = get_user_model()
-model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
 class TurkishAutoSlugField(AutoSlugField):
@@ -59,6 +58,7 @@ class ContentModel(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.embedding:
+            model = SentenceTransformer("all-MiniLM-L6-v2")
             text_to_embed = f"{self.title}\n{self.text}"
             self.embedding = model.encode(text_to_embed, convert_to_numpy=True, device='cpu').tolist()
         super().save(*args, **kwargs)
