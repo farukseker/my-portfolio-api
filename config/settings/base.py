@@ -88,7 +88,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]+[
     'analytical.middleware.AnalyticalMiddleware',
-    'chatwithme.middleware.ChatSessionTrustMiddleware'
+    # 'chatwithme.middleware.ChatSessionTrustMiddleware'
 ]+[
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'
@@ -171,29 +171,3 @@ CUSTOM_LOGGER = DiscordLogger(webhook_url=DISCORD_LOGGER_WEBHOOK_URL, **discord_
 PROMPT_TEMPLATES_BASE_DIR = BASE_DIR / 'chatwithme/prompt_templates'
 
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-    "formatters": {
-        "verbose": {
-            "format": "{name} {levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
-        },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-    },
-}

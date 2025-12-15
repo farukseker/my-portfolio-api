@@ -1,4 +1,6 @@
 import logging
+from typing import List
+
 from langchain_core.tools import tool
 from projects.models import ContentModel
 
@@ -18,7 +20,7 @@ def get_blog_meta_data(query: str) -> str:
     try:
         logger.info('getting blog meta data')
         docs = ContentModel.objects.all()
-        context = '\n'.join([f"title: {doc.title}\n slug: {doc.slug}" for doc in docs])
+        context:str = '\n'.join([f"title: {doc.title}\n slug: {doc.slug}" for doc in docs])
         return context
     except:
         logger.error('No blog posts found.')

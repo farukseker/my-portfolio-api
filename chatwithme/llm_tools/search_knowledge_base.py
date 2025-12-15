@@ -16,13 +16,15 @@ def search_knowledge_base(query: str) -> str:
     logger.info(f'query(search_knowledge_base): {query}')
     try:
         results = faiss_content_search(query, top_k=5)
-        logger.info(f'query(search_knowledge_base) does not match results: {results}')
+        logger.info(f'query(search_knowledge_base):results: {results}')
         if not results:
             return "No relevant internal knowledge found."
 
         logger.info(f'query(search_knowledge_base) start building content context')
         context = build_faiss_content_context(results)
         logger.info(f'query(search_knowledge_base) end building content context')
+        if not context:
+            return "No relevant internal knowledge found."
         return context
     except Exception as e:
         print(f'query(search_knowledge_base): {e}')
