@@ -5,7 +5,7 @@ from autoslug import AutoSlugField
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from unidecode import unidecode
-# from pgvector.django import VectorField
+from pgvector.django import VectorField
 from sentence_transformers import SentenceTransformer
 
 
@@ -42,8 +42,8 @@ class ContentModel(models.Model):
     seo_image_alt = models.TextField(blank=True, null=True)
 
     text = models.TextField(help_text='use html')
-    # embedding = VectorField(dimensions=768, null=True, blank=True)
-    embedding = models.JSONField(default=list, blank=True, null=True, editable=False)
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+    # embedding = models.JSONField(default=list, blank=True, null=True, editable=False)
 
     created = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)

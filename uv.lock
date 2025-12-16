@@ -738,6 +738,7 @@ dependencies = [
     { name = "djangorestframework-simplejwt" },
     { name = "faiss-cpu" },
     { name = "fake-useragent" },
+    { name = "faker" },
     { name = "gunicorn" },
     { name = "langchain" },
     { name = "langchain-core" },
@@ -783,6 +784,7 @@ requires-dist = [
     { name = "djangorestframework-simplejwt", specifier = ">=5.5.1" },
     { name = "faiss-cpu", specifier = ">=1.13.1" },
     { name = "fake-useragent", specifier = ">=2.2.0" },
+    { name = "faker", specifier = ">=38.2.0" },
     { name = "gunicorn", specifier = ">=23.0.0" },
     { name = "langchain", specifier = ">=0.3.27" },
     { name = "langchain-core", specifier = ">=0.3.79" },
@@ -835,6 +837,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/41/43/948d10bf42735709edb5ae51e23297d034086f17fc7279fef385a7acb473/fake_useragent-2.2.0.tar.gz", hash = "sha256:4e6ab6571e40cc086d788523cf9e018f618d07f9050f822ff409a4dfe17c16b2", size = 158898, upload-time = "2025-04-14T15:32:19.238Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/51/37/b3ea9cd5558ff4cb51957caca2193981c6b0ff30bd0d2630ac62505d99d0/fake_useragent-2.2.0-py3-none-any.whl", hash = "sha256:67f35ca4d847b0d298187443aaf020413746e56acd985a611908c73dba2daa24", size = 161695, upload-time = "2025-04-14T15:32:17.732Z" },
+]
+
+[[package]]
+name = "faker"
+version = "38.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/64/27/022d4dbd4c20567b4c294f79a133cc2f05240ea61e0d515ead18c995c249/faker-38.2.0.tar.gz", hash = "sha256:20672803db9c7cb97f9b56c18c54b915b6f1d8991f63d1d673642dc43f5ce7ab", size = 1941469, upload-time = "2025-11-19T16:37:31.892Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/93/00c94d45f55c336434a15f98d906387e87ce28f9918e4444829a8fda432d/faker-38.2.0-py3-none-any.whl", hash = "sha256:35fe4a0a79dee0dc4103a6083ee9224941e7d3594811a50e3969e547b0d2ee65", size = 1980505, upload-time = "2025-11-19T16:37:30.208Z" },
 ]
 
 [[package]]
