@@ -65,7 +65,7 @@ class ChatMessagingView(APIView):
                 ("human", "{message}"),
             ]
         )
-        llm = get_llm()
+        llm = get_llm('google/gemini-2.5-flash')
         llm = llm.bind_tools([
             search_knowledge_base,
             get_blog_meta_data,
