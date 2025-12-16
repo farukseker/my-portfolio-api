@@ -23,8 +23,8 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
-INSTALLED_APPS.append('debug_toolbar')
-MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+# INSTALLED_APPS.append('debug_toolbar')
+# MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

@@ -5,7 +5,7 @@ from autoslug import AutoSlugField
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from unidecode import unidecode
-from pgvector.django import VectorField
+# from pgvector.django import VectorField
 from sentence_transformers import SentenceTransformer
 
 
@@ -42,7 +42,8 @@ class ContentModel(models.Model):
     seo_image_alt = models.TextField(blank=True, null=True)
 
     text = models.TextField(help_text='use html')
-    embedding = VectorField(dimensions=768, null=True, blank=True)
+    # embedding = VectorField(dimensions=768, null=True, blank=True)
+    embedding = models.JSONField(default=list, blank=True, null=True, editable=False)
 
     created = models.DateTimeField(auto_now_add=True)
     update = models.DateTimeField(auto_now=True)
@@ -57,10 +58,27 @@ class ContentModel(models.Model):
     custom_data = models.JSONField(default=get_default_custom_data, blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        if not self.embedding:
+        emb = self.embedding
+
+        # Note (EN): Don't use `if not emb` with numpy arrays; check None/length explicitly.
+        is_empty = emb is None
+
+        if not is_empty:
+            # Note (EN): Handle both python lists and numpy arrays safely.
+            if hasattr(emb, "size"):  # numpy array
+                is_empty = emb.size == 0
+            else:  # list / tuple / etc.
+                try:
+                    is_empty = len(emb) == 0
+                except TypeError:
+                    is_empty = False
+
+        if is_empty:
             model = SentenceTransformer("all-MiniLM-L6-v2")
             text_to_embed = f"{self.title}\n{self.text}"
-            self.embedding = model.encode(text_to_embed, convert_to_numpy=True, device='cpu').tolist()
+            vec = model.encode(text_to_embed, convert_to_numpy=True, device="cpu")
+            self.embedding = vec.tolist() if hasattr(vec, "tolist") else list(vec)
+
         super().save(*args, **kwargs)
 
     def get_view(self):
