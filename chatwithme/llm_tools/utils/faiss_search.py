@@ -12,7 +12,6 @@ def faiss_content_search(query: str, top_k: int = 5, score_top_limit: float = 1.
 
         q_emb = embed_model.encode([query], convert_to_numpy=True)
         distances, idx = builds_embed.index.search(q_emb, top_k)
-        print(len(idx))
         # [
         #     logger.info(f'title: {builds_embed.docs[i].get('title')} | score: {float(score)}')
         #     for i, score in zip(idx[0], distances[0])

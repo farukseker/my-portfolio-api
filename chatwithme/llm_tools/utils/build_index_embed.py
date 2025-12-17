@@ -12,7 +12,9 @@ class BuildsEmbed:
 
 
 def build_content_index_embed() -> BuildsEmbed:
-    docs = ContentModel.objects.all()
+    docs = ContentModel.objects.filter(
+        show=True
+    )
     emb = np.stack([np.array(d.embedding, dtype=float) for d in docs])
     docs = [
         {

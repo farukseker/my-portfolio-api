@@ -42,7 +42,7 @@ class ContentModel(models.Model):
     seo_image_alt = models.TextField(blank=True, null=True)
 
     text = models.TextField(help_text='use html')
-    embedding = VectorField(dimensions=768, null=True, blank=True)
+    embedding = VectorField(dimensions=768, null=True, blank=True, default=None)
     # embedding = models.JSONField(default=list, blank=True, null=True, editable=False)
 
     created = models.DateTimeField(auto_now_add=True)

@@ -19,7 +19,9 @@ def get_blog_meta_data(query: str) -> str:
     """
     try:
         logger.info('getting blog meta data')
-        docs = ContentModel.objects.all()
+        docs = ContentModel.objects.filter(
+            show=True
+        )
         context:str = '\n'.join([f"title: {doc.title}\n slug: {doc.slug}" for doc in docs])
         return context
     except:
