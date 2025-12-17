@@ -28,5 +28,5 @@ class ContentListSerializer(ContentSerializer):
 
     class Meta:
         model = ContentModel
-        # exclude: tuple = 'text',
-        fields: str = '__all__'
+        exclude: tuple = 'embedding',
+        # fields: str = '__all__'
