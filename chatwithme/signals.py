@@ -27,9 +27,10 @@ def when_organize_new_meeting_send_notification_to_admin(sender, instance, creat
 def when_start_new_chat_send_notification_to_admin(sender, instance, created, **kwargs):
     if created:
         ChatLog.objects.create(
+            room_id=instance.room_id,
             type='ai',
-                message='Selam ben Echo: '
-                        'Size faruk şeker hakkında bilgi vermek için buradayım size nasıl yardımcı olabilirim?'
+            message='Selam ben Echo: '
+                    'Size faruk şeker hakkında bilgi vermek için buradayım size nasıl yardımcı olabilirim?'
         )
         ...
         # CUSTOM_LOGGER.construct(
