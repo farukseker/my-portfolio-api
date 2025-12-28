@@ -83,46 +83,50 @@ class ChatMessagingView(APIView):
 
     @staticmethod
     def stream_generator(chat, user_message, chat_room):
-        events = chat.stream(
-            {"message": user_message},
-            config={"configurable": {"session_id": chat_room.session_id}},
-        )
+        try:
+            events = chat.stream(
+                {"message": user_message},
+                config={"configurable": {"session_id": chat_room.session_id}},
+            )
 
-        for event in events:
-            if hasattr(event, "content") and event.content and len(event.content) > 0 and isinstance(event, (AIMessage, AIMessageChunk)) and event.content:
-                yield event.content
+            for event in events:
+                if hasattr(event, "content") and event.content and len(event.content) > 0 and isinstance(event, (AIMessage, AIMessageChunk)) and event.content:
+                    yield event.content
 
-            if event.tool_calls:
-                tool_messages: list[ToolMessage] = []
-                for call in event.tool_calls:
-                    tool = tools_map[call["name"]]
-                    result = tool.invoke(call["args"])
+                if event.tool_calls:
+                    tool_messages: list[ToolMessage] = []
+                    for call in event.tool_calls:
+                        tool = tools_map[call["name"]]
+                        result = tool.invoke(call["args"])
 
-                    ChatLog.objects.create(
-                        room=chat_room,
-                        type="tool",
-                        message=result,
-                        extra_json=json.dumps({
-                            "name": call["name"],
-                            "tool_call_id": call["id"],
-                        }),
-                    )
-                    tool_messages.append(
-                        ToolMessage(
-                            content=result,
-                            tool_call_id=call["id"],
-                            name=call["name"],
+                        ChatLog.objects.create(
+                            room=chat_room,
+                            type="tool",
+                            message=result,
+                            extra_json=json.dumps({
+                                "name": call["name"],
+                                "tool_call_id": call["id"],
+                            }),
                         )
+                        tool_messages.append(
+                            ToolMessage(
+                                content=result,
+                                tool_call_id=call["id"],
+                                name=call["name"],
+                            )
+                        )
+
+                    followup = chat.stream(
+                        {"message": tool_messages},
+                        config={"configurable": {"session_id": chat_room.session_id}},
                     )
-
-                followup = chat.stream(
-                    {"message": tool_messages},
-                    config={"configurable": {"session_id": chat_room.session_id}},
-                )
-                for ev in followup:
-                    if isinstance(ev, (AIMessage, AIMessageChunk)) and ev.content:
-                        yield ev.content
-
+                    for ev in followup:
+                        if isinstance(ev, (AIMessage, AIMessageChunk)) and ev.content:
+                            yield ev.content
+        finally:
+            if events:
+                events.close()
+            del chat
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)

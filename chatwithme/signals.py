@@ -30,12 +30,5 @@ def when_start_new_chat_send_notification_to_admin(sender, instance, created, **
             room=instance,
             type='ai',
             message='Selam ben Echo: '
-                    'Size faruk şeker hakkında bilgi vermek için buradayım size nasıl yardımcı olabilirim?'
+                    'Size Faruk Şeker hakkında bilgi vermek için buradayım size nasıl yardımcı olabilirim?'
         )
-        ...
-        # CUSTOM_LOGGER.construct(
-        #     title="Created New Chat Room",
-        #     description= f"Created New Chat Room | {str(instance.session_id)}",
-        #     level="success",
-        # )
-        # CUSTOM_LOGGER.send()
