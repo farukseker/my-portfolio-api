@@ -14,6 +14,6 @@ urlpatterns = [
     path('game/', include('game.api.urls'), name='game'),
     path('analytical/', include('analytical.api.urls'), name='analytical'),
     path('resume/', include('resume.api.urls'), name='resume'),
-    path('chat/', include('chatwithme.api.urls'), name='chat')
+    # Namespace "chat" altında chatwithme API url'leri
+    path('chat/', include(('chatwithme.api.urls', 'chat'), namespace='chat')),
 ]
-

@@ -95,66 +95,106 @@ class ChatMessagingView(APIView):
 
     @staticmethod
     def stream_generator(chat, user_message, chat_room):
+        """
+        Stream LLM events safely.
+        Any HTTP / network error from upstream LLM is caught and logged,
+        so the Gunicorn worker does not crash.
+        """
         events = None
         followup = None
         try:
-            events = chat.stream(
-                {"message": user_message},
-                config={"configurable": {"session_id": chat_room.session_id}},
-            )
+            try:
+                events = chat.stream(
+                    {"message": user_message},
+                    config={"configurable": {"session_id": chat_room.session_id}},
+                )
+            except Exception as e:
+                logger.exception("Error while starting LLM stream", exc_info=e)
+                yield "[ERROR] LLM stream could not be started. Please try again later."
+                return
 
             for event in events:
-                if hasattr(event, "content") and event.content and len(event.content) > 0 and isinstance(event, (AIMessage, AIMessageChunk)) and event.content:
-                    yield event.content
+                try:
+                    if (
+                        hasattr(event, "content")
+                        and event.content
+                        and len(event.content) > 0
+                        and isinstance(event, (AIMessage, AIMessageChunk))
+                        and event.content
+                    ):
+                        yield event.content
 
-                if hasattr(event, "tool_calls") and event.tool_calls:
-                    tool_messages: list[ToolMessage] = []
-                    for call in event.tool_calls:
-                        tool = tools_map[call["name"]]
-                        result = tool.invoke(call["args"])
+                    if hasattr(event, "tool_calls") and event.tool_calls:
+                        tool_messages: list[ToolMessage] = []
+                        for call in event.tool_calls:
+                            tool = tools_map[call["name"]]
+                            result = tool.invoke(call["args"])
 
-                        ChatLog.objects.create(
-                            room=chat_room,
-                            type="tool",
-                            message=result,
-                            extra_json=json.dumps({
-                                "name": call["name"],
-                                "tool_call_id": call["id"],
-                            }),
-                        )
-                        tool_messages.append(
-                            ToolMessage(
-                                content=result,
-                                tool_call_id=call["id"],
-                                name=call["name"],
+                            ChatLog.objects.create(
+                                room=chat_room,
+                                type="tool",
+                                message=result,
+                                extra_json=json.dumps(
+                                    {
+                                        "name": call["name"],
+                                        "tool_call_id": call["id"],
+                                    }
+                                ),
                             )
-                        )
+                            tool_messages.append(
+                                ToolMessage(
+                                    content=result,
+                                    tool_call_id=call["id"],
+                                    name=call["name"],
+                                )
+                            )
 
-                    followup = chat.stream(
-                        {"message": tool_messages},
-                        config={"configurable": {"session_id": chat_room.session_id}},
-                    )
-                    for ev in followup:
-                        if isinstance(ev, (AIMessage, AIMessageChunk)) and ev.content:
-                            yield ev.content
+                        try:
+                            followup = chat.stream(
+                                {"message": tool_messages},
+                                config={
+                                    "configurable": {
+                                        "session_id": chat_room.session_id
+                                    }
+                                },
+                            )
+                            for ev in followup:
+                                if isinstance(ev, (AIMessage, AIMessageChunk)) and ev.content:
+                                    yield ev.content
+                        except Exception as e:
+                            logger.exception("Error while streaming followup LLM response", exc_info=e)
+                            break
+                except Exception as e:
+                    logger.exception("Error while processing LLM stream event", exc_info=e)
+                    break
         finally:
-            # Bellek temizliği - stream'leri kapat
+            # Close streams if possible
             try:
-                if followup and hasattr(followup, 'close'):
+                if followup and hasattr(followup, "close"):
                     followup.close()
             except Exception:
                 pass
             try:
-                if events and hasattr(events, 'close'):
+                if events and hasattr(events, "close"):
                     events.close()
             except Exception:
                 pass
-            # Referansları temizle
-            del chat
+
+            # Drop references
+            try:
+                del chat
+            except Exception:
+                pass
             if events:
-                del events
+                try:
+                    del events
+                except Exception:
+                    pass
             if followup:
-                del followup
+                try:
+                    del followup
+                except Exception:
+                    pass
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
