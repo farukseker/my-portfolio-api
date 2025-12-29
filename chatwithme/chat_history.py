@@ -10,15 +10,22 @@ from langchain_core.messages import (
 
 from chatwithme.models import ChatRoom, ChatLog
 
+MAX_HISTORY_MESSAGES = 50
+
 
 class DjangoChatMessageHistory(BaseChatMessageHistory):
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.room, _ = ChatRoom.objects.get_or_create(session_id=session_id)
+        self._messages_cache = None
 
     @property
     def messages(self):
-        logs = ChatLog.objects.filter(room=self.room).order_by("timestamp")
+        if self._messages_cache is not None:
+            return self._messages_cache
+        
+        logs = ChatLog.objects.filter(room=self.room).order_by("-timestamp")[:MAX_HISTORY_MESSAGES]
+        logs = list(reversed(logs)) 
         result = []
 
         for log in logs:
@@ -39,7 +46,7 @@ class DjangoChatMessageHistory(BaseChatMessageHistory):
                 meta = json.loads(log.extra_json or "{}")
                 tool_call_id = meta.get("tool_call_id")
 
-                if tool_call_id:  # 🔑 critical guard
+                if tool_call_id:  # critical guard for tool calls
                     result.append(
                         ToolMessage(
                             content=log.message,
@@ -50,10 +57,12 @@ class DjangoChatMessageHistory(BaseChatMessageHistory):
             else:  # system
                 result.append(SystemMessage(content=log.message))
 
+        self._messages_cache = result
         return result
 
     def add_message(self, message):
-        # Map message class -> DB type
+        self._messages_cache = None
+        
         if isinstance(message, HumanMessage):
             msg_type = "human"
             extra = None
@@ -85,4 +94,5 @@ class DjangoChatMessageHistory(BaseChatMessageHistory):
         )
 
     def clear(self):
+        self._messages_cache = None
         ChatLog.objects.filter(room=self.room).delete()

@@ -3,10 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from datetime import timedelta
 from django.utils.timezone import now
-from django.core.cache import cache
-from rest_framework.response import Response
 from chatwithme.llm_models import ChatHistory
-from chatwithme.api.serializers import ChatHistorySerializer
 import hashlib
 
 

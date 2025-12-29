@@ -2,37 +2,49 @@ import os
 import re
 from dataclasses import dataclass
 from typing import Any
+from django.utils import timezone
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel
 from config.settings.base import BASE_DIR
 from langchain.schema import SystemMessage
-from chatwithme import llm_models   # senin modeller
+from chatwithme import llm_models
 
 PROMPT_DIR = BASE_DIR / "chatwithme/prompt_templates"
 
-# -----------------------------------------
-# INCLUDE LOADING
-# -----------------------------------------
+
 def load_include(path: str) -> str:
     full_path = os.path.join(PROMPT_DIR, path)
     with open(full_path, "r", encoding="utf-8") as f:
         return f.read()
 
+
 def load_row_rules():
-    row_rules = []
-    for fname in sorted(os.listdir(PROMPT_DIR)):
-        if fname.endswith('.rule'):
-            full_path = os.path.join(PROMPT_DIR, fname)
-            with open(full_path, "r", encoding="utf-8") as f:
-                row_rules.append(f.read().strip())
-    return row_rules
+    """
+    Load rule files with caching and add current datetime context.
+    Datetime info is added fresh each time to ensure it's always current.
+    """
+    from django.core.cache import cache
+    
+    cache_key = "chatwithme_row_rules"
+    row_rules = cache.get(cache_key)
+    
+    if row_rules is None:
+        row_rules = []
+        for fname in sorted(os.listdir(PROMPT_DIR)):
+            if fname.endswith('.rule'):
+                full_path = os.path.join(PROMPT_DIR, fname)
+                with open(full_path, "r", encoding="utf-8") as f:
+                    row_rules.append(f.read().strip())
+        cache.set(cache_key, row_rules, timeout=3600)
+    
+    # Add current datetime info (always fresh, not cached)
+    now = timezone.now()
+    datetime_info = f"CURRENT_DATE_TIME: {now.strftime('%Y-%m-%d %H:%M:%S %Z')}\nCURRENT_DAY_OF_WEEK: {now.strftime('%A')}\nCURRENT_YEAR: {now.year}\nCURRENT_MONTH: {now.strftime('%B')}\n"
+    
+    return [datetime_info] + row_rules
 
 
-# -----------------------------------------
-# PROMPT DEF
-# next time try: x-ai/grok-4.1-fast
-# -----------------------------------------
 @dataclass
 class PromptDef:
     name: str
@@ -47,26 +59,20 @@ class PromptDef:
 
     def _template(self):
         """
-        Build ChatPromptTemplate or PromptTemplate depending on type
-        with persona + rules support.
+        Build ChatPromptTemplate or PromptTemplate based on type.
         """
-        print(f'{self.input_vars=}')
         if self.is_chat:
             final_messages = []
 
-            # -----------------------------------------
-            # 1) ROW RULES HER ŞEYİN EN ÜSTÜNE EKLENİYOR
-            # -----------------------------------------
+            # Add row rules first
             for rr in load_row_rules():
                 final_messages.append(SystemMessage(rr.strip()))
 
-            # final_messages.append(("system", GLOBAL_RULES.strip()))
-
-            # PROMPT-SPECIFIC RULES
+            # Add prompt-specific rules
             if self.rules:
                 final_messages.append(("system", f"EXTRA RULES:\n{self.rules.strip()}"))
 
-            # USER-DEFINED MESSAGES FROM FILE
+            # Add user-defined messages from file
             if self.messages:
                 for message in self.messages:
                     final_messages.append(message)
@@ -74,7 +80,7 @@ class PromptDef:
             return ChatPromptTemplate.from_messages(final_messages)
 
         else:
-            # classic (chat olmayan) template
+            # Classic template (non-chat)
             content = (
                     "\n".join(load_row_rules()) + "\n" +
                     "\n".join([x.content for x in self.messages] if self.messages else '') +
@@ -101,9 +107,6 @@ class PromptDef:
         return template | self.llm | self.parser
 
 
-# -----------------------------------------
-# PROMPT MANAGER V3
-# -----------------------------------------
 class PromptManager:
     def __init__(self, llm_ref):
         self.llm_ref = llm_ref
@@ -124,9 +127,6 @@ class PromptManager:
         p.llm = self.llm_ref
         self.prompts[name] = p
 
-    # -----------------------------------------
-    # FULL PARSER
-    # -----------------------------------------
     def parse_prompt(self, name: str, context: str) -> PromptDef:
         model = None
         input_vars = None
@@ -136,7 +136,7 @@ class PromptManager:
         messages = []
         body = []
 
-        # INCLUDES
+        # Process includes
         includes = re.findall(r"\{include:([^}]+)\}", context)
         for inc in includes:
             context = context.replace(f"{{include:{inc}}}", load_include(inc))
@@ -146,8 +146,7 @@ class PromptManager:
         multi_buffer = []
 
         for line in lines:
-            # Metadata
-
+            # Parse metadata lines starting with !
             if line.startswith("!"):
                 key, val = line.split(":", 1)
                 val = val.strip()
@@ -165,14 +164,14 @@ class PromptManager:
                     rules = val
                 continue
 
-            # Multiline block close
+            # Close multiline block
             if multiline_role and line.strip() == "":
                 messages.append((multiline_role, "\n".join(multi_buffer)))
                 multiline_role = None
                 multi_buffer = []
                 continue
 
-            # Detect "system: |"
+            # Detect multiline start "role: |"
             if is_chat and ":" in line and "|" in line:
                 role, rest = line.split(":", 1)
                 role = role.strip()
@@ -182,12 +181,12 @@ class PromptManager:
                         multi_buffer = []
                         continue
 
-            # Append multiline
+            # Append to multiline buffer
             if multiline_role:
                 multi_buffer.append(line)
                 continue
 
-            # Single-line chat
+            # Parse single-line chat message
             if is_chat and ":" in line:
                 role, msg = line.split(":", 1)
                 role = role.strip()
@@ -195,7 +194,7 @@ class PromptManager:
                     messages.append((role, msg.strip()))
                     continue
 
-            # Fallback → classic prompt body
+            # Fallback to classic prompt body
             body.append(line)
 
         return PromptDef(
@@ -209,6 +208,5 @@ class PromptManager:
             is_chat=is_chat
         )
 
-    # Access like: manager.summarize
     def __getattr__(self, key):
         return self.prompts[key]

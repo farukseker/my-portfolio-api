@@ -2,10 +2,10 @@ from typing import Literal
 from os import getenv
 import logging
 import json
+import threading
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
-
 from django.http import StreamingHttpResponse
 
 from chatwithme.api.serializers import HumanMessageSerializer
@@ -20,7 +20,6 @@ from chatwithme.llm_tools import search_knowledge_base
 from chatwithme.llm_tools import get_blog_meta_data
 
 
-
 tools_map = {
     "search_knowledge_base": search_knowledge_base,
     "get_blog_meta_data": get_blog_meta_data,
@@ -28,22 +27,35 @@ tools_map = {
 
 logger = logging.getLogger(__name__)
 
+# Modül seviyesinde LLM instance cache'i - pickle sorunu olmadan
+_llm_cache = {}
+_cache_lock = threading.Lock()
 
-def get_llm(model: str = "x-ai/grok-4.1-fast") -> Literal['ChatOpenAI']:
-    from langchain_openai import ChatOpenAI
-    llm: ChatOpenAI = ChatOpenAI(
-        api_key=getenv("OPENROUTER_API_KEY"),
-        base_url="https://openrouter.ai/api/v1",
-        model=model,
-        # model="mistralai/ministral-14b-2512", # sum da kulan stream sorunlu
-        temperature=.2,
-        max_retries=0,
-        default_headers={
-            "HTTP-Referer": 'farukseker.com.tr',
-            "X-Title": 'farukseker',
-        }
-    )
-    return llm
+
+def get_llm(model: str = "x-ai/grok-4.1-fast"):
+    """
+    LLM instance'ını modül seviyesinde cache'leyerek RAM kullanımını azaltır.
+    Aynı model için aynı instance'ı döndürür.
+    Pickle sorunu olmadığı için Django cache yerine modül seviyesinde dictionary kullanıyoruz.
+    """
+    if model not in _llm_cache:
+        with _cache_lock:
+            # Double-check locking pattern
+            if model not in _llm_cache:
+                from langchain_openai import ChatOpenAI
+                _llm_cache[model] = ChatOpenAI(
+                    api_key=getenv("OPENROUTER_API_KEY"),
+                    base_url="https://openrouter.ai/api/v1",
+                    model=model,
+                    temperature=.2,
+                    max_retries=0,
+                    default_headers={
+                        "HTTP-Referer": 'farukseker.com.tr',
+                        "X-Title": 'farukseker',
+                    }
+                )
+    
+    return _llm_cache[model]
 
 
 class ChatMessagingView(APIView):
@@ -83,6 +95,8 @@ class ChatMessagingView(APIView):
 
     @staticmethod
     def stream_generator(chat, user_message, chat_room):
+        events = None
+        followup = None
         try:
             events = chat.stream(
                 {"message": user_message},
@@ -93,7 +107,7 @@ class ChatMessagingView(APIView):
                 if hasattr(event, "content") and event.content and len(event.content) > 0 and isinstance(event, (AIMessage, AIMessageChunk)) and event.content:
                     yield event.content
 
-                if event.tool_calls:
+                if hasattr(event, "tool_calls") and event.tool_calls:
                     tool_messages: list[ToolMessage] = []
                     for call in event.tool_calls:
                         tool = tools_map[call["name"]]
@@ -124,9 +138,23 @@ class ChatMessagingView(APIView):
                         if isinstance(ev, (AIMessage, AIMessageChunk)) and ev.content:
                             yield ev.content
         finally:
-            if events:
-                events.close()
+            # Bellek temizliği - stream'leri kapat
+            try:
+                if followup and hasattr(followup, 'close'):
+                    followup.close()
+            except Exception:
+                pass
+            try:
+                if events and hasattr(events, 'close'):
+                    events.close()
+            except Exception:
+                pass
+            # Referansları temizle
             del chat
+            if events:
+                del events
+            if followup:
+                del followup
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
