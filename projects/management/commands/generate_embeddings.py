@@ -1,24 +1,31 @@
 import time
+import numpy as np
+from os import getenv
 from django.core.management.base import BaseCommand
-from sentence_transformers import SentenceTransformer
 from django.db import transaction
 
 from projects.models import ContentModel
 
 
 class Command(BaseCommand):
-    help = "Generate embeddings for ContentModel records with timing"
+    help = "Generate embeddings for ContentModel records (OpenRouter)"
 
     def add_arguments(self, parser):
+        parser.add_argument("--batch-size", type=int, default=32)
         parser.add_argument(
-            "--batch-size",
-            type=int,
-            default=32,
-            help="Number of records per batch",
+            "--every-content",
+            action="store_true",
+            help="Reset all embeddings before re-embedding",
         )
 
     def handle(self, *args, **options):
+        from chatwithme.llm_tools.utils import get_embedder
         batch_size = options["batch_size"]
+        every_content = options["every_content"]
+
+        if every_content:
+            self.stdout.write("Resetting all embeddings to NULL...")
+            ContentModel.objects.update(embedding=None)
 
         qs = ContentModel.objects.filter(embedding__isnull=True)
         total = qs.count()
@@ -27,7 +34,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("No records need embedding."))
             return
 
-        model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")
+        embedder = get_embedder
 
         start_time = time.perf_counter()
         processed = 0
@@ -40,11 +47,8 @@ class Command(BaseCommand):
                 for obj in batch
             ]
 
-            vectors = model.encode(
-                texts,
-                convert_to_numpy=True,
-                batch_size=batch_size,
-            )
+            vectors = embedder(texts)
+            vectors = np.asarray(vectors, dtype="float32")
 
             with transaction.atomic():
                 for obj, vec in zip(batch, vectors):

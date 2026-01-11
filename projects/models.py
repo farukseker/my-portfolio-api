@@ -1,12 +1,9 @@
 from django.db import models
 from autoslug import AutoSlugField
-# import string
-# import random
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from unidecode import unidecode
 from pgvector.django import VectorField
-from sentence_transformers import SentenceTransformer
 
 
 User = get_user_model()
@@ -58,26 +55,25 @@ class ContentModel(models.Model):
     custom_data = models.JSONField(default=get_default_custom_data, blank=True, null=True)
 
     def save(self, *args, **kwargs):
+        from chatwithme.llm_tools.utils import get_embedder
         emb = self.embedding
 
-        # Note (EN): Don't use `if not emb` with numpy arrays; check None/length explicitly.
+        # Note (EN): Explicit empty check, safe for None / list / numpy
         is_empty = emb is None
 
         if not is_empty:
-            # Note (EN): Handle both python lists and numpy arrays safely.
-            if hasattr(emb, "size"):  # numpy array
+            if hasattr(emb, "size"):  # numpy
                 is_empty = emb.size == 0
-            else:  # list / tuple / etc.
+            else:
                 try:
                     is_empty = len(emb) == 0
                 except TypeError:
                     is_empty = False
 
         if is_empty:
-            model = SentenceTransformer("all-MiniLM-L6-v2")
             text_to_embed = f"{self.title}\n{self.text}"
-            vec = model.encode(text_to_embed, convert_to_numpy=True, device="cpu")
-            self.embedding = vec.tolist() if hasattr(vec, "tolist") else list(vec)
+            vec = get_embedder(text_to_embed)
+            self.embedding = vec  # already a python list
 
         super().save(*args, **kwargs)
 
