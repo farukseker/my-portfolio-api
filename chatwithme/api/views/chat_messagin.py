@@ -33,11 +33,6 @@ _cache_lock = threading.Lock()
 
 
 def get_llm(model: str = "x-ai/grok-4.1-fast"):
-    """
-    LLM instance'ını modül seviyesinde cache'leyerek RAM kullanımını azaltır.
-    Aynı model için aynı instance'ı döndürür.
-    Pickle sorunu olmadığı için Django cache yerine modül seviyesinde dictionary kullanıyoruz.
-    """
     if model not in _llm_cache:
         with _cache_lock:
             # Double-check locking pattern

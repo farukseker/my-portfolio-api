@@ -41,6 +41,6 @@ else:
     urlpatterns.append(
         path(
             "robots.txt",
-            lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain"),
+            lambda r: HttpResponse("User-agent: *\nDisallow: /", content_type="text/plain", status=200),
         )
     )
