@@ -72,7 +72,7 @@ class ChatMessagingView(APIView):
                 ("human", "{message}"),
             ]
         )
-        llm = get_llm()
+        llm = get_llm('x-ai/grok-4.1-fast')
         # llm = get_llm()
         llm = llm.bind_tools([
             search_knowledge_base,
@@ -124,7 +124,6 @@ class ChatMessagingView(APIView):
                         for call in event.tool_calls:
                             tool = tools_map[call["name"]]
                             result = tool.invoke(call["args"])
-
                             ChatLog.objects.create(
                                 room=chat_room,
                                 type="tool",
