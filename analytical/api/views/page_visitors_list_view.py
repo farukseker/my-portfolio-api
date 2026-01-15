@@ -21,7 +21,8 @@ class PageVisitorsListView(ListAPIView):
     serializer_class = ViewSerializer
     pagination_class = VisitorsResultsPageNumberPagination
     permission_classes = [
-        IsAuthenticated, IsAdminUser
+        IsAuthenticated,
+        IsAdminUser
     ]
 
     def get(self, request, *args, **kwargs):

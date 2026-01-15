@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from analytical.models import ViewModel, AnalyticMedia
+from analytical.models import ViewModel, IPBanModel, AnalyticMedia
 from unfold.contrib.import_export.forms import ExportForm
 from unfold.admin import ModelAdmin
 from import_export.admin import ExportActionModelAdmin
@@ -31,3 +31,5 @@ class ViewModelAdmin(ModelAdmin, ExportActionModelAdmin):
     list_display = ("ip_address", "visit_time", "request_type", "is_i_am")
     search_fields = ("ip_address", "user_agent", "ip_data__city", "ip_data__country")
     list_filter = ("request_type", CityCountryFilter)
+
+admin.site.register(IPBanModel, ModelAdmin)
