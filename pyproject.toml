@@ -1,65 +1,31 @@
 [project]
-name = "f4v2cv"
+name = "myportfolyoapi"
 version = "0.1.0"
 description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
-
+requires-python = ">=3.14"
 dependencies = [
-    # --- Core ---
-    "django>=5.2.7",
-    "djangorestframework>=3.16.1",
-    "gunicorn>=23.0.0",
-    "psycopg2>=2.9.11",
-    "whitenoise[brotli]>=6.11.0",
-    "python-dotenv>=1.2.1",
-    "pyyaml>=6.0.3",
-    "setuptools>=80.9.0",
-    # --- Django ecosystem ---
-    "django-autoslug>=1.9.9",
-    "django-cors-headers>=4.9.0",
-    "django-dbbackup>=5.0.0",
-    "django-environ>=0.12.0",
-    "django-gdrive-backup>=0.0.11",
-    "django-import-export>=4.3.10",
-    "django-phonenumber-field>=8.3.0",
-    "django-rest-knox>=5.0.2",
-    "django-storages>=1.14.6",
-    "django-unfold>=0.68.0",
-    "djangorestframework-simplejwt>=5.5.1",
-    # --- Media / utils ---
     "cloudinary>=1.44.1",
-    "pillow>=12.0.0",
-    "unidecode>=1.4.0",
-    "colorlog>=6.10.1",
-    "psutil>=7.1.0",
-    # --- Auth / misc ---
-    "pyotp>=2.9.0",
-    "phonenumbers>=9.0.16",
-    "python-dateutil>=2.9.0.post0",
-    # --- Integrations ---
-    "discord>=2.3.2",
-    "discord-py>=2.6.4",
-    "discord-webhook>=1.4.1",
-    # --- AI / Vector (CPU-safe) ---
-    "langchain>=0.3.27",
-    "langchain-core>=0.3.79",
-    "langchain-openai>=0.3.35",
-    "langchain-google-genai>=2.1.12",
-    "langchain-ollama>=0.3.10",
-    "sentence-transformers>=5.1.2",
-    "faiss-cpu>=1.13.1",
-    "pgvector>=0.4.2",
-    # --- Observability ---
-    "sentry-sdk>=2.42.0",
-    "beautifulsoup4>=4.14.3",
-    "fake-useragent>=2.2.0",
-    "faker>=38.2.0",
+    "discord-logger>=1.2.5",
+    "django==6.0",
+    "django-cloudinary-storage>=0.3.0",
+    "django-cors-headers>=4.9.0",
+    "django-environ>=0.12.0",
+    "django-import-export>=4.4.0",
+    "django-unfold>=0.76.0",
 ]
 
 [dependency-groups]
 dev = [
     "jupyter>=1.1.1",
-    "lab>=8.6",
+    "lab>=8.7",
     "pandas>=2.3.3",
+    "tox>=4.34.1",
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["api*", "config*"]
+exclude = ["static*", "uploads*", "media*", "staticfiles*"]

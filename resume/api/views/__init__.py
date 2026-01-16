@@ -1,3 +1,0 @@
-from .resume_create_retive_update_destroy import ResumeView, ResumeRetrieveUpdateDestroyView
-from .work_experiences_views import WorkExperiencesRetrieveUpdateDestroyView, WorkExperiencesCreateView
-from .project_experiences_views import ProjectExperiencesRetrieveUpdateDestroyView, ProjectExperiencesCreateView

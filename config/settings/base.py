@@ -50,31 +50,40 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]+[
-    'custom_auth',
-    'custom_admin',
-    'pages',
-    'analytical',
-    'message',
-    'tags',
-    'projects',
-    'media_manager',
-    'todo',
-    'game',
-    'resume',
-    'wall',
-    'testimonial',
-    'config',
-    'chatwithme'
+    # 'custom_auth',
+    # 'custom_admin',
+    # 'pages',
+    # 'analytical',
+    # 'message',
+    # 'tags',
+    # 'projects',
+    # 'media_manager',
+    # 'todo',
+    # 'game',
+    # 'resume',
+    # 'wall',
+    # 'testimonial',
+    # 'config',
+    # 'chatwithme'
     # 'survey'
+    "media_test"
 ]+[
     # 3rd apps
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    'import_export',
+    # 'rest_framework',
+    # 'rest_framework_simplejwt',
+    # 'corsheaders',
+    # 'import_export',
+    # ---
+    "cloudinary",
+    "cloudinary_storage",
+    # ---
     # 'rest_framework.authtoken',
     # 'knox'
 ]
+
+
+# DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+# STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
 
 # INSTALLED_APPS.insert(0, 'unfold')  # 3rd
 
@@ -87,11 +96,11 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]+[
-    'analytical.middleware.AnalyticalMiddleware',
+    # 'analytical.middleware.AnalyticalMiddleware',
     # 'chatwithme.middleware.ChatSessionTrustMiddleware'
 ]+[
     'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware'
+    # 'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -134,8 +143,8 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles/'
 
-MEDIA_URL = 'local-media/'
-MEDIA_ROOT = BASE_DIR / 'uploads'
+# MEDIA_URL = 'local-media/'
+# MEDIA_ROOT = BASE_DIR / 'uploads'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -170,4 +179,21 @@ CUSTOM_LOGGER = DiscordLogger(webhook_url=DISCORD_LOGGER_WEBHOOK_URL, **discord_
 
 PROMPT_TEMPLATES_BASE_DIR = BASE_DIR / 'chatwithme/prompt_templates'
 
+CLOUDINARY_URL=f"CLOUDINARY_URL=cloudinary://{env('CLOUDINARY_STORAGE_CLOUD_NAME')}:{env('CLOUDINARY_STORAGE_API_KEY')}@{env('CLOUDINARY_STORAGE_API_SECRET')}"
 
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": env('CLOUDINARY_STORAGE_CLOUD_NAME'),
+    "API_KEY": env('CLOUDINARY_STORAGE_API_KEY'),
+    "API_SECRET": env('CLOUDINARY_STORAGE_API_SECRET'),
+    "STATIC_TAG": "static",
+    "STATICFILES_MANIFEST_ROOT": STATIC_ROOT,
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "cloudinary_storage.storage.StaticHashedCloudinaryStorage",
+    },
+}

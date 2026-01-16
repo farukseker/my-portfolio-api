@@ -1,30 +1,26 @@
 import requests
-from bs4 import BeautifulSoup
-
-from config.settings.base import API_QUERY_HOST, API_QUERY_PATH
+from config.settings.base import API_QUERY_HOST
 
 
-def get_bs4_clean_text(obj):
-    return obj.text.replace('\n', '').strip()
+def get_ip_data(ip: str = "") -> dict:
+    r = requests.get(f"{API_QUERY_HOST}{ip}", timeout=10)
+    r.raise_for_status()
+    data = r.json()
 
+    if data.get("status") != "success":
+        return {}
 
-def get_ip_data(ip='') -> dict:
-    result = {}
-    try:
-        response = requests.get(API_QUERY_HOST / API_QUERY_PATH + ip)
-        pyload = BeautifulSoup(response.text, 'html.parser')
-        ip_provider = pyload.find('div', {'class': 'query-ip-location-content-info'})
-        ip_provider_context = ip_provider.find_all('div')
-        result['host'] = get_bs4_clean_text(ip_provider_context[0])
-        result['provider'] = get_bs4_clean_text(ip_provider_context[1])
-        for frame in pyload.findAll('li'):
-            _ = frame.findAll('span')
-            result[get_bs4_clean_text(_[1])] = get_bs4_clean_text(_[2])
-        return result
-    except Exception as err:
-        print('ip q err')
-        print(err)
-    finally:
-        return result
+    return {
+        "ip": data.get("query"),
+        "country": data.get("country"),
+        "countryCode": data.get("countryCode"),
+        "region": data.get("regionName"),
+        "city": data.get("city"),
+        "lat": data.get("lat"),
+        "lon": data.get("lon"),
+        "isp": data.get("isp"),
+        "org": data.get("org"),
+        "asn": data.get("as"),
+    }
 
-
+__all__: list[str] = "get_ip_data",

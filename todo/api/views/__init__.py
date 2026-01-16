@@ -1,5 +1,0 @@
-from .todo_list_view import AllToDoListView
-from .todo_retrieve_update_destroy_view import ToDoRetrieveUpdateDestroyView
-from .todo_create_view import ToDoCreateView
-from .category_create_view import ToDoCategoryCreateView
-from .todo_category_retrieve_update_destroy_view import ToDoCategoryRetrieveUpdateDestroyView

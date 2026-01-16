@@ -1,4 +1,4 @@
-from ..models import ViewModel, IPBanModel
+from ..models import ViewModel, IPRefModel
 from django.utils import timezone
 import logging
 from .ip_data import get_ip_data
@@ -18,7 +18,7 @@ class ViewCountWithRule:
         if self.page is None:
             raise ModuleNotFoundError('An object that can be counted is not defined')
 
-        if IPBanModel.objects.filter(ip_address=self.ip_address).exists():
+        if IPRefModel.objects.filter(ip_address=self.ip_address, is_blocked=True).exists():
             return False
 
         if self.use_hourly_cooldown:

@@ -1,4 +1,6 @@
 from django.db import models
+
+from analytical.models.ip_ban_model import IPRefModel
 from config.settings.base import env
 from typing import NoReturn
 
@@ -10,16 +12,8 @@ def default_ip_data():
 class ViewModel(models.Model):
     visit_time = models.DateTimeField(auto_now_add=True)
     reload_count_in_a_clock = models.IntegerField(default=1)
-    # ip_address = EncryptedField()
-    ip_address = models.TextField()
-    # ip_query_id = models.TextField(null=True, blank=True, default=None)
-    ip_data = models.JSONField(null=True, default=default_ip_data, blank=True)
-    is_i_am = models.BooleanField(default=False)
-    user_agent = models.TextField(null=True, default=None, blank=True, editable=False)
-    query_string = models.TextField(null=True, default=None, blank=True)
-    request_type = models.CharField(max_length=20, null=True, default=None, blank=True)
-    http_sec_ch_ua = models.TextField(null=True, default=None, blank=True)
-    request_data = models.TextField(null=True, default=None, blank=True)
+    ip = models.OneToOneField(IPRefModel, on_delete=models.CASCADE)
+
 
     time_tick_count = models.PositiveBigIntegerField(default=1)
 

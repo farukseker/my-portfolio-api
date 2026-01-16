@@ -20,13 +20,14 @@ from django.conf import settings
 from config.settings.base import env
 from django.conf.urls.static import static
 from django.http import HttpResponse
-from analytical.views import AnalyticalMediaRedirectView
+# from analytical.views import AnalyticalMediaRedirectView
+
 
 
 urlpatterns = [
     # Namespace for all API urls: "api"
     path('api/', include(('api.urls', 'api'), namespace='api')),
-    path('media/<slug>',  AnalyticalMediaRedirectView.as_view())
+    # path('media/<slug>',  AnalyticalMediaRedirectView.as_view())
 ]
 
 if settings.DEBUG:
