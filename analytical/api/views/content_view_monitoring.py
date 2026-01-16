@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from analytical.api.serializers import ItemSerializer
 
-from projects.models import ContentModel
+from contents.models import ContentModel
 from pages.models import PageModel
 
 

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from analytical.models import ViewModel
 from pages.models import PageModel
-from projects.models import ContentModel, ContentCommentModel
+from contents.models import ContentModel, ContentCommentModel
 from message.models import MessageModel
 from game.models import GameVideoModel
 from analytical.api.serializers import ViewSerializer

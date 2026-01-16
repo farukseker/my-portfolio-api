@@ -53,10 +53,10 @@ INSTALLED_APPS = [
     # 'custom_auth',
     # 'custom_admin',
     # 'pages',
-    # 'analytical',
+    'analytical',
     # 'message',
-    # 'tags',
-    # 'projects',
+    'tags',
+    'contents',
     # 'media_manager',
     # 'todo',
     # 'game',
@@ -66,7 +66,6 @@ INSTALLED_APPS = [
     # 'config',
     # 'chatwithme'
     # 'survey'
-    "media_test"
 ]+[
     # 3rd apps
     # 'rest_framework',

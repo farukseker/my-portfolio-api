@@ -1,6 +1,6 @@
 from django.db import models
 
-from analytical.models.ip_ban_model import IPRefModel
+from analytical.models.ip_ref_model import IPRefModel
 from config.settings.base import env
 from typing import NoReturn
 
