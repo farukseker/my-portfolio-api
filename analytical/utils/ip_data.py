@@ -11,9 +11,9 @@ def get_ip_data(ip: str = "") -> dict:
         return {}
 
     return {
-        "ip": data.get("query"),
+        "ip_address": data.get("query"),
         "country": data.get("country"),
-        "countryCode": data.get("countryCode"),
+        "country_code": data.get("countryCode", -1),
         "region": data.get("regionName"),
         "city": data.get("city"),
         "lat": data.get("lat"),

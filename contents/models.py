@@ -52,7 +52,12 @@ class ContentModel(models.Model):
     view = models.ManyToManyField('analytical.ViewModel', blank=True, default=None, editable=True)
     is_featured = models.BooleanField(default=False)
     language_type = models.CharField(max_length=1, choices=LanguageType, default=LanguageType.ENG)
+
     custom_data = models.JSONField(default=get_default_custom_data, blank=True, null=True)
+
+    demo_ref = models.URLField(blank=True, null=True)
+    demo_video_ref = models.URLField(blank=True, null=True)
+    github_url = models.URLField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         from chatwithme.llm_tools.utils import get_embedder

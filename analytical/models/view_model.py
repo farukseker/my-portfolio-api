@@ -44,7 +44,7 @@ class ViewModel(models.Model):
         for month, turkish in months.items():
             visited_time = visited_time.replace(month, turkish)
 
-        return f'{self.pk} | {self.ip_address} | {visited_time} '
+        return f'{self.ip.ip_address} | {visited_time} '
 
     @staticmethod
     def ip_query_service_url() -> str:

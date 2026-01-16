@@ -50,11 +50,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]+[
-    # 'custom_auth',
-    # 'custom_admin',
-    # 'pages',
+    'custom_auth',
+    'custom_admin',
+    'pages',
     'analytical',
-    # 'message',
+    'message',
     'tags',
     'contents',
     # 'media_manager',
@@ -64,14 +64,14 @@ INSTALLED_APPS = [
     # 'wall',
     # 'testimonial',
     # 'config',
-    # 'chatwithme'
+    'chatwithme'
     # 'survey'
 ]+[
     # 3rd apps
-    # 'rest_framework',
-    # 'rest_framework_simplejwt',
-    # 'corsheaders',
-    # 'import_export',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'import_export',
     # ---
     "cloudinary",
     "cloudinary_storage",
@@ -81,10 +81,6 @@ INSTALLED_APPS = [
 ]
 
 
-# DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-# STATICFILES_STORAGE = 'cloudinary_storage.storage.StaticHashedCloudinaryStorage'
-
-# INSTALLED_APPS.insert(0, 'unfold')  # 3rd
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -96,7 +92,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]+[
     # 'analytical.middleware.AnalyticalMiddleware',
-    # 'chatwithme.middleware.ChatSessionTrustMiddleware'
+    'chatwithme.middleware.ChatSessionTrustMiddleware'
 ]+[
     'corsheaders.middleware.CorsMiddleware',
     # 'whitenoise.middleware.WhiteNoiseMiddleware'

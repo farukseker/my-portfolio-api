@@ -6,7 +6,7 @@ from analytical.models import ViewModel
 from pages.models import PageModel
 from contents.models import ContentModel, ContentCommentModel
 from message.models import MessageModel
-from game.models import GameVideoModel
+# from game.models import GameVideoModel
 from analytical.api.serializers import ViewSerializer
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from config.utils import EncryptionService
@@ -14,7 +14,7 @@ from config.utils import EncryptionService
 
 class UserFlow(APIView):
     permission_classes: list = [IsAuthenticated, IsAdminUser]
-    models_with_view_reference: list = PageModel, ContentModel, GameVideoModel, ContentCommentModel, MessageModel
+    models_with_view_reference: list = PageModel, ContentModel, ContentCommentModel, MessageModel, # GameVideoModel
 
     def get(self, request, *args, **kwargs):
         time_ranges: dict = {

@@ -1,0 +1,17 @@
+    from config.settings.base import CUSTOM_LOGGER
+
+    CUSTOM_LOGGER.construct(
+        title="Celery Task Manager",
+        description="completed training job for model v1.3.3!",
+        level="info",
+        metadata={
+            "Metrics": {
+                "Accuracy": 78.9,
+                "Inference time": "0.8 sec",
+                "Model size": "32 MB",
+            },
+            "Deployment status": "progress",
+        },
+    )
+
+    response = CUSTOM_LOGGER.send()

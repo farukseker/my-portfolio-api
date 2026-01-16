@@ -6,6 +6,7 @@ requires-python = ">=3.14"
 dependencies = [
     "cloudinary>=1.44.1",
     "colorlog>=6.10.1",
+    "cryptography>=46.0.3",
     "discord-logger>=1.2.5",
     "django==6.0",
     "django-autoslug>=1.9.9",
@@ -17,9 +18,16 @@ dependencies = [
     "django-unfold>=0.76.0",
     "djangorestframework>=3.16.1",
     "djangorestframework-simplejwt>=5.5.1",
+    "faiss-cpu>=1.13.2",
+    "langchain>=1.2.4",
+    "langchain-core>=1.2.7",
+    "langchain-openai>=1.1.7",
     "markdown>=3.10",
+    "numpy>=2.4.1",
     "pgvector>=0.4.2",
     "psycopg2>=2.9.11",
+    "pyotp>=2.9.0",
+    "sentry-sdk>=2.49.0",
     "unidecode>=1.4.0",
 ]
 
@@ -28,6 +36,7 @@ dev = [
     "jupyter>=1.1.1",
     "lab>=8.7",
     "pandas>=2.3.3",
+    "python-dotenv>=1.2.1",
     "tox>=4.34.1",
 ]
 

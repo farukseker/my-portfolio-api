@@ -9,7 +9,6 @@ urlpatterns = [
     path('items', views.Items.as_view(), name='items'),
     path('page/<slug:slug>/<int:count>', views.PageAnalyticalView.as_view()),
     path('visitors/<slug:name>/', views.PageVisitorsListView.as_view()),
-    path('heatmap', views.HeatMapDataView.as_view()),
 ]+[
     # matrix
     path('matrix/<name>/years', views.PageYearlyView.as_view()),
@@ -18,11 +17,6 @@ urlpatterns = [
     # path('matrix/<name>/<int:year>/<int:month>/week', views.PageMonthDaysListView.as_view()),
     path('matrix/<name>/<int:year>/<int:month>/day', views.PageMonthDaysListView.as_view()),
     path('matrix/<name>/<int:year>/<int:month>/<int:day>', views.PageMonthDayView.as_view()),
-]+[
-    # media
-    path('analytical-media', views.AnalyticalMediaListCreateView.as_view()),
-    path('analytical-media/<pk>', views.AnalyticalMediaRetrieveUpdateDestroyView.as_view()),
-    # analytical_media/<id>
 ]
 
 
