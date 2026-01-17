@@ -1,168 +1,140 @@
-from ..models import ViewModel, IPRefModel, IPRequestMeta
-from django.utils import timezone
 import logging
-from .ip_data import get_ip_data
+from django.apps import apps
+from django.utils import timezone
 from django.conf import settings
-# from config.settings.base import CUSTOM_LOGGER
+from django.tasks import task  # Kullandığınız kütüphane
+
+from ..models import IPRefModel, IPRequestMeta, ViewModel
+from .ip_data import get_ip_data
+
+logger = logging.getLogger('ViewTask')
+
+
+@task
+def process_view_task(app_label, model_name, object_id, ip_address, meta_data, hourly_cooldown=True):
+    """
+    Bu fonksiyon arka planda çalışır. Request objesine erişimi yoktur.
+    Tüm veriyi parametre olarak alır.
+    """
+    try:
+        # 1. Page objesini dinamik olarak tekrar çekiyoruz
+        model_class = apps.get_model(app_label, model_name)
+        page = model_class.objects.get(pk=object_id)
+        if page:
+            print('page war moruk ', page)
+    except model_class.DoesNotExist:
+        logger.error(f"Page object not found | {app_label}.{model_name} id={object_id}")
+        return
+
+    logger.debug(f"Task started | page={object_id} ip={ip_address}")
+
+    # --- Yardımcı Fonksiyonlar (Task İçinde) ---
+    def get_last_visit_view():
+        if ip_ref := IPRefModel.objects.filter(ip_address=ip_address).first():
+            return page.view.filter(ip=ip_ref).order_by('-visit_time').first()
+        return None
+
+    def can_proceed():
+        if IPRefModel.objects.filter(ip_address=ip_address, is_blocked=True).exists():
+            logger.info(f"Blocked IP | {ip_address}")
+            return False
+
+        if hourly_cooldown:
+            if vs := get_last_visit_view():
+                now = timezone.now()
+                if vs.visit_time.day == now.day:
+                    return not (vs.visit_time.hour == now.hour)
+        return True
+
+    if can_proceed():
+        logger.debug(f"Creating new view | ip={ip_address}")
+
+        ip_defaults = {}
+        if not settings.DEBUG:
+            try:
+                ip_defaults = get_ip_data(ip_address)
+            except Exception as e:
+                logger.error(f"IP Data Error: {e}")
+
+        ip_obj, created = IPRefModel.objects.update_or_create(
+            ip_address=ip_address,
+            defaults=ip_defaults
+        )
+
+        fingerprint = IPRequestMeta.build_fingerprint(
+            user_agent=str(meta_data.get('user_agent')),
+            http_sec_ch_ua=meta_data.get('http_sec_ch_ua'),
+            request_type=meta_data.get('request_method'),
+        )
+
+        IPRequestMeta.objects.get_or_create(
+            ip=ip_obj,
+            fingerprint=fingerprint,
+            defaults={
+                "user_agent": str(meta_data.get('user_agent')),
+                "http_sec_ch_ua": meta_data.get('http_sec_ch_ua'),
+                "query_string": meta_data.get('query_string'),
+                "request_type": meta_data.get('request_method'),
+                "request_data": meta_data.get('request_data')[:500],
+            },
+        )
+
+        view = ViewModel.objects.create(
+            visit_time=timezone.now(),
+            ip=ip_obj,
+        )
+
+        page.view.add(view)
+
+    else:
+        logger.debug(f"Reusing last view | ip={ip_address}")
+        if view := get_last_visit_view():
+            view.reload_count_in_a_clock += 1
+            view.save()
+
+
+import logging
 
 
 class ViewCountWithRule:
-    def __init__(self, page, request, hourly_cooldown: bool = True):
+    def __init__(self, page: object | None, request, hourly_cooldown: bool = True):
         self.logger = logging.getLogger('ViewCountWithRule')
         self.page = page
         self.request = request
+        self.hourly_cooldown = hourly_cooldown
+
         self.ip_address = self.get_client_ip()
-        self.use_hourly_cooldown = hourly_cooldown
-
-        self.logger.debug(
-            "Initialized | page=%s ip=%s hourly_cooldown=%s",
-            getattr(page, "id", None),
-            self.ip_address,
-            hourly_cooldown,
-        )
-
-    def can(self):
-        if self.page is None:
-            self.logger.error("Page object is None")
-            raise ModuleNotFoundError('An object that can be counted is not defined')
-
-        if IPRefModel.objects.filter(ip_address=self.ip_address, is_blocked=True).exists():
-            self.logger.info("Blocked IP detected | ip=%s", self.ip_address)
-            return False
-
-        if self.use_hourly_cooldown:
-            if vs := self.get_last_visit_view():
-                now = timezone.now()
-                self.logger.debug(
-                    "Last visit found | ip=%s last_visit=%s now=%s",
-                    self.ip_address,
-                    vs.visit_time,
-                    now,
-                )
-                if vs.visit_time.day == now.day:
-                    return not vs.visit_time.hour == now.hour
-
-        self.logger.debug("View allowed | ip=%s", self.ip_address)
-        return True
-
-    def get_last_visit_view(self):
-        if ip_ref := IPRefModel.objects.filter(ip_address=self.ip_address).first():
-            view = self.page.view.filter(ip=ip_ref).order_by('-visit_time').first()
-            self.logger.debug(
-                "Fetched last view | ip=%s view_id=%s",
-                self.ip_address,
-                getattr(view, "id", None),
-            )
-            return view
-
-        self.logger.debug("No IPRefModel found | ip=%s", self.ip_address)
+        self.meta_data = self.extract_meta_data()
 
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
         ip = x_forwarded_for.split(',')[0] if x_forwarded_for else self.request.META.get('REMOTE_ADDR')
-        self.logger.debug("Resolved client IP | ip=%s", ip)
         return ip
 
-    def is_admin_user(self):
-        is_admin = self.request.user.is_authenticated and self.request.user.is_superuser
-        self.logger.debug("Admin check | ip=%s is_admin=%s", self.ip_address, is_admin)
-        return is_admin
+    def extract_meta_data(self):
+        data = getattr(self.request, 'data', None)
+        if not isinstance(data, (dict, list, str, int, float, bool, type(None))):
+            data = str(data)
 
-    def get_user_agent(self):
-        if meta := self.request.META.get('HTTP_USER_AGENT', None):
-            return meta
-        elif hasattr(self.request, 'META'):
-            self.logger.error("HTTP_USER_AGENT missing | META=%s", self.request.META)
-        else:
-            self.logger.error("Request has no META attribute")
-        return None
+        return {
+            "user_agent": self.request.META.get('HTTP_USER_AGENT', ''),
+            "http_sec_ch_ua": self.request.META.get("HTTP_SEC_CH_UA"),
+            "query_string": self.request.META.get("QUERY_STRING"),
+            "request_method": self.request.META.get("REQUEST_METHOD"),
+            "request_data": data,
+        }
 
-    def get_ip_data(self):
-        if settings.DEBUG:
-            self.logger.debug("Skipping IP data lookup (DEBUG=True)")
-            return {}
-        try:
-            return get_ip_data(self.ip_address)
-        except Exception as ERR:
-            self.logger.exception(
-                "IP data lookup failed | ip=%s error=%s",
-                self.ip_address,
-                ERR,
-            )
-            ...
+    def __call__(self):
+        if not self.page:
+            return
 
-    def action(self):
-        if self.can():
-            self.logger.debug("Creating new view | ip=%s", self.ip_address)
-            view = self.create_view()
-            self.page.view.add(view)
-        else:
-            self.logger.debug("Reusing last view | ip=%s", self.ip_address)
-            view = self.get_last_visit_view()
-            view.reload_count_in_a_clock += 1
+        self.logger.debug(f"Dispatching task for page {self.page.__dict__}")
 
-        view.save()
-        self.logger.debug(
-            "View saved | view_id=%s reload_count=%s",
-            view.id,
-            getattr(view, "reload_count_in_a_clock", None),
-        )
-        return view
-
-    def get_cleaned_data(self) -> dict | None:
-        data = self.request.data if hasattr(self.request, 'data') else None
-        self.logger.debug("Request data extracted | has_data=%s", bool(data))
-        return data
-
-    def create_view(self):
-        print(self.__dict__)
-        ip, created = IPRefModel.objects.update_or_create(
+        process_view_task.enqueue(
+            app_label=self.page._meta.app_label,
+            model_name=self.page._meta.model_name,
+            object_id=self.page.pk if self.page else None,
             ip_address=self.ip_address,
-            defaults=get_ip_data(self.ip_address),
+            meta_data=self.meta_data,
+            hourly_cooldown=self.hourly_cooldown
         )
-
-        fingerprint = IPRequestMeta.build_fingerprint(
-            user_agent=str(self.get_user_agent()),
-            http_sec_ch_ua=self.request.META.get("HTTP_SEC_CH_UA"),
-            request_type=self.request.META.get("REQUEST_METHOD"),
-        )
-
-        IPRequestMeta.objects.get_or_create(
-            ip=ip,
-            fingerprint=fingerprint,
-            defaults={
-                "user_agent": str(self.get_user_agent()),
-                "http_sec_ch_ua": self.request.META.get("HTTP_SEC_CH_UA"),
-                "query_string": self.request.META.get("QUERY_STRING"),
-                "request_type": self.request.META.get("REQUEST_METHOD"),
-                "request_data": self.get_cleaned_data(),
-            },
-        )
-
-
-        if created:
-            self.logger.warning(
-                "IPRefModel not found, created new | ip=%s",
-                self.ip_address,
-            )
-        else:
-            self.logger.debug(
-                "IPRefModel exists | ip=%s",
-                self.ip_address,
-            )
-
-        view = ViewModel.objects.create(
-            visit_time=timezone.now(),
-            ip=ip,
-        )
-
-        self.logger.debug(
-            "ViewModel created | view_id=%s ip=%s",
-            view.id,
-            self.ip_address,
-        )
-        return view
-
-    def __call__(self, *args, **kwargs):
-        self.logger.debug("ViewCountWithRule called")
-        return self.action()

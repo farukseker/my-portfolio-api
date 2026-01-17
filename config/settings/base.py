@@ -192,3 +192,7 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.StaticHashedCloudinaryStorage",
     },
 }
+
+TASKS = {
+    "default": {"BACKEND": "django.tasks.backends.immediate.ImmediateBackend"}
+}
