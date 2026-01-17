@@ -17,7 +17,7 @@ class ViewListAnalyticSerializer(serializers.ModelSerializer):
 
 
 class PagesAnalyticsSerializer(serializers.ModelSerializer):
-    view = ViewListAnalyticSerializer(many=True)
+    # view = ViewListAnalyticSerializer(many=True)
     hourly_plot = serializers.SerializerMethodField()
     monthly_plot = serializers.SerializerMethodField()
 
@@ -77,7 +77,7 @@ class PagesAnalyticsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PageModel
-        fields = ('name', 'view', 'hourly_plot', 'monthly_plot', 'image', 'title')
+        fields = 'name', 'hourly_plot', 'monthly_plot', 'image', 'title', # view
 
 
 class PageAnalyticSerializer(serializers.Serializer):
